@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Search Engine</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <!-- Include PDF.js library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <!-- Set up worker script -->
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '/static/pdf.worker.js';  // Ensure this path is correct
+  </script>  
+  <script src="/static/pdf.js"></script>
+  <script src="/static/pdf.worker.js"></script>  
+</head>
+<body>
+  <div class="search-container">
+    <input type="text" id="search-input" placeholder="Search for a keyword">
+    <button id="search-btn">Search</button>
+  </div>
+
+  <div id="search-results"></div>
+
+  <!-- PDF Viewer -->
+  <div id="pdf-viewer">
+    <!-- Container for rendering multiple pages -->
+    <div id="canvas-container" style="position: relative;"></div>
+    <!-- Hidden canvas for fallback -->
+    <canvas id="pdf-canvas" style="display: none;"></canvas>
+  </div>
+
+  <!-- Include JavaScript files -->
+  <script src="/static/script.js"></script>
+</body>
+</html>
