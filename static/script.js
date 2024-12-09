@@ -1,7 +1,5 @@
-// Using pdf.js library with worker setup
-
-// Ensure the path to the worker script is correct
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/static/pdf.worker.js';  // Correct path to the worker script
+// Using pdf.js library with CDN worker setup
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
 // DOM elements
 const searchInput = document.getElementById('search-input');
@@ -19,7 +17,6 @@ searchBtn.addEventListener('click', async () => {
   }
 
   try {
-    // Fetch search results from the API
     const response = await fetch(`/search?keyword=${encodeURIComponent(keyword)}`);
     if (!response.ok) throw new Error('Error fetching search results');
 
@@ -30,13 +27,13 @@ searchBtn.addEventListener('click', async () => {
       return;
     }
 
-    // Display the search results
     searchResults.innerHTML = data.results
       .map(result => `
         <div class="result-item">
           <p><strong>${result.filename}</strong></p>
           <p>${result.snippet}</p>
           <button onclick="openPdf('${result.filename}', '${keyword}')">Open PDF</button>
+          <button onclick="openPdfInViewer('${result.filename}', '${keyword}')">Open in Default Viewer</button>
         </div>
       `)
       .join('');
@@ -46,26 +43,22 @@ searchBtn.addEventListener('click', async () => {
   }
 });
 
-// Function to open a PDF and render it in the custom viewer
 async function openPdf(filename, keyword) {
-  const url = `/pdfs/${filename}`; // Adjusted to match your folder structure
+  const url = `/pdfs/${filename}`;
   const loadingTask = pdfjsLib.getDocument(url);
 
   try {
     const pdf = await loadingTask.promise;
     const numPages = pdf.numPages;
-    canvasContainer.innerHTML = ''; // Clear previous renders
+    canvasContainer.innerHTML = ''; // Clear previous PDFs
 
-    // Loop through pages and render each one
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
       const viewport = page.getViewport({ scale: 1.5 });
 
-      // Create a canvas for each page
       const canvas = document.createElement('canvas');
       canvas.width = viewport.width;
       canvas.height = viewport.height;
-
       canvasContainer.appendChild(canvas);
 
       const renderContext = {
@@ -73,9 +66,10 @@ async function openPdf(filename, keyword) {
         viewport: viewport,
       };
 
+      // Render the page on the canvas
       await page.render(renderContext).promise;
 
-      // Highlight the text after rendering
+      // After rendering, highlight text based on search keyword
       highlightText(page, keyword, viewport, canvas);
     }
   } catch (error) {
@@ -84,21 +78,41 @@ async function openPdf(filename, keyword) {
   }
 }
 
-// Function to highlight the search keyword in the PDF
-async function highlightText(page, keyword, viewport, context) {
-  const textContent = await page.getTextContent();
+async function openPdfInViewer(filename, keyword) {
+  // The URL of the PDF
+  const url = `/pdfs/${filename}`;
 
-  context.globalAlpha = 0.4; // Make the highlight semi-transparent
+  // This will open the PDF in the browser's default PDF viewer (Chrome's built-in viewer)
+  // The query parameter "search" is used to pre-fill the search bar with the keyword.
+  const viewerUrl = `${url}#search=${encodeURIComponent(keyword)}`;
+
+  window.open(viewerUrl, '_blank');
+}
+
+async function highlightText(page, keyword, viewport, canvas) {
+  const textContent = await page.getTextContent();
+  const context = canvas.getContext('2d');
+
+  context.globalAlpha = 0.4; // Semi-transparent highlight
   context.fillStyle = 'yellow';
 
-  textContent.items.forEach(item => {
-    if (item.str.toLowerCase().includes(keyword.toLowerCase())) {
-      const [x, y] = item.transform.slice(4);
-      const width = item.width * viewport.transform[0];
-      const height = 10; // Approximate height of the text
+  // Loop through all text items to find occurrences of the keyword
+  textContent.items.forEach((item) => {
+    const text = item.str;
+    if (text.toLowerCase().includes(keyword.toLowerCase())) {
+      // Extract position of the text (x, y) and its width and height
+      const [x, y] = item.transform.slice(4, 6); // Extract x and y positions from transform
+      const width = item.width * viewport.transform[0]; // Apply scale to width
+      const height = item.height || 10; // Default height if not available
 
-      // Draw highlight rectangle
-      context.fillRect(x, viewport.height - y, width, height);
+      // Adjust the Y position by flipping it (because canvas Y is top-down and PDF Y is bottom-up)
+      const adjustedY = viewport.height - y - height;
+
+      // Apply scaling for the coordinates
+      const adjustedX = x * viewport.transform[0];
+
+      // Draw the highlight over the text
+      context.fillRect(adjustedX, adjustedY, width, height);
     }
   });
 }
