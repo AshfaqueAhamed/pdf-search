@@ -1,4 +1,4 @@
-// Using pdf.js library with CDN worker setup
+// Using pdf.js library
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
 // DOM elements
@@ -7,7 +7,7 @@ const searchBtn = document.getElementById('search-btn');
 const searchResults = document.getElementById('search-results');
 const canvasContainer = document.getElementById('canvas-container'); // Add a container for multiple pages
 
-// Event listener for the Search button
+// Search button
 searchBtn.addEventListener('click', async () => {
   const keyword = searchInput.value.trim();
   
@@ -79,7 +79,7 @@ async function openPdf(filename, keyword) {
 }
 
 async function openPdfInViewer(filename, keyword) {
-  // The URL of the PDF
+  // The URL of the PDF for opening in default viewer
   const url = `/pdfs/${filename}`;
 
   // This will open the PDF in the browser's default PDF viewer (Chrome's built-in viewer)
@@ -93,7 +93,7 @@ async function highlightText(page, keyword, viewport, canvas) {
   const textContent = await page.getTextContent();
   const context = canvas.getContext('2d');
 
-  context.globalAlpha = 0.4; // Semi-transparent highlight
+  context.globalAlpha = 0.4; 
   context.fillStyle = 'yellow';
 
   // Loop through all text items to find occurrences of the keyword
@@ -102,8 +102,8 @@ async function highlightText(page, keyword, viewport, canvas) {
     if (text.toLowerCase().includes(keyword.toLowerCase())) {
       // Extract position of the text (x, y) and its width and height
       const [x, y] = item.transform.slice(4, 6); // Extract x and y positions from transform
-      const width = item.width * viewport.transform[0]; // Apply scale to width
-      const height = item.height || 10; // Default height if not available
+      const width = item.width * viewport.transform[0]; 
+      const height = item.height || 10; 
 
       // Adjust the Y position by flipping it (because canvas Y is top-down and PDF Y is bottom-up)
       const adjustedY = viewport.height - y - height;

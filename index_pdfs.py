@@ -3,7 +3,7 @@ from PyPDF2 import PdfReader
 import sqlite3
 
 # Path to the folder containing PDFs
-pdf_folder = "pdfs"  # Make sure this folder contains your PDF files
+pdf_folder = "pdfs"  
 
 # Connect to the database
 conn = sqlite3.connect('database/pdf_index.db')
