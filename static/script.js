@@ -93,26 +93,22 @@ async function highlightText(page, keyword, viewport, canvas) {
   const textContent = await page.getTextContent();
   const context = canvas.getContext('2d');
 
-  context.globalAlpha = 0.4; 
-  context.fillStyle = 'yellow';
+  context.globalAlpha = 0.4; // Transparency for the highlight
+  context.fillStyle = 'yellow'; // Highlight color
 
-  // Loop through all text items to find occurrences of the keyword
   textContent.items.forEach((item) => {
     const text = item.str;
     if (text.toLowerCase().includes(keyword.toLowerCase())) {
-      // Extract position of the text (x, y) and its width and height
-      const [x, y] = item.transform.slice(4, 6); // Extract x and y positions from transform
-      const width = item.width * viewport.transform[0]; 
-      const height = item.height || 10; 
+      const [x, y] = item.transform.slice(4, 6); // Extract x and y from transform
+      const width = item.width * viewport.scale; // Adjust width for scale
+      const fontHeight = Math.abs(item.transform[3]) * viewport.scale; // Extract font height from transform matrix
 
-      // Adjust the Y position by flipping it (because canvas Y is top-down and PDF Y is bottom-up)
-      const adjustedY = viewport.height - y - height;
+      // Adjust Y-coordinate for canvas's coordinate system
+      const adjustedY = viewport.height - y * viewport.scale - fontHeight;
 
-      // Apply scaling for the coordinates
-      const adjustedX = x * viewport.transform[0];
-
-      // Draw the highlight over the text
-      context.fillRect(adjustedX, adjustedY, width, height);
+      // Draw the highlight
+      context.fillRect(x * viewport.scale, adjustedY, width, fontHeight);
     }
   });
 }
+

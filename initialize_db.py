@@ -1,6 +1,6 @@
 import sqlite3
 
-# Connect to the database (creates the file if it doesn't exist)
+# Connect to the database 
 conn = sqlite3.connect('database/pdf_index.db')
 cursor = conn.cursor()
 
